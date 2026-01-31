@@ -1,0 +1,250 @@
+import React, { useRef, useEffect, useState } from 'react';
+import { ArrowLeft, Eraser, Check, RotateCcw, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const HEART_SUTRA = `观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减`;
+
+export default function Sutra() {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [feedback, setFeedback] = useState(null); // 'success', 'retry'
+
+  const currentChar = HEART_SUTRA[currentIndex];
+
+  // Initialize Canvas & Guide
+  useEffect(() => {
+    initCanvas();
+    window.addEventListener('resize', initCanvas);
+    return () => window.removeEventListener('resize', initCanvas);
+  }, [currentIndex]);
+
+  const initCanvas = () => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    // Make sure we use the full container size
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    
+    ctx.scale(dpr, dpr);
+    
+    // Initial Styles
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 12; 
+    ctx.strokeStyle = '#2c2c2c'; 
+
+    drawGuide(ctx, width, height);
+  };
+
+  const drawGuide = (ctx, width, height) => {
+    ctx.clearRect(0, 0, width, height);
+    
+    // Calculate Box Size - Limit to 80% of width or height (whichever is smaller) to ensure padding
+    const size = Math.min(width, height) * 0.75; 
+    const startX = (width - size) / 2;
+    const startY = (height - size) / 2;
+
+    // Save dimensions for font scaling
+    ctx.save();
+    
+    // Draw Grid (Tian Zi Ge)
+    ctx.beginPath();
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 1;
+    
+    // Box
+    ctx.strokeRect(startX, startY, size, size);
+    
+    // Diagonals
+    ctx.moveTo(startX, startY); ctx.lineTo(startX + size, startY + size);
+    ctx.moveTo(startX + size, startY); ctx.lineTo(startX, startY + size);
+    
+    // Middle lines
+    ctx.moveTo(startX, startY + size/2); ctx.lineTo(startX + size, startY + size/2);
+    ctx.moveTo(startX + size/2, startY); ctx.lineTo(startX + size/2, startY + size);
+    ctx.stroke();
+
+    // Draw Text Guide (KaiTi / Serif)
+    // Font size should be slightly smaller than the box to fit comfortably
+    ctx.font = `400 ${size * 0.8}px "Noto Serif SC", serif`;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Center text exactly in the box
+    ctx.fillText(currentChar, width / 2, height / 2);
+    
+    ctx.restore();
+  };
+
+  const getPos = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+    };
+  };
+
+  const startDrawing = (e) => {
+    setIsDrawing(true);
+    setFeedback(null); 
+    const { x, y } = getPos(e);
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineWidth = 12; 
+    ctx.strokeStyle = '#2c2c2c';
+  };
+
+  const draw = (e) => {
+    if (!isDrawing) return;
+    const { x, y } = getPos(e);
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    if(isDrawing) {
+        const ctx = canvasRef.current.getContext('2d');
+        ctx.closePath();
+        setIsDrawing(false);
+    }
+  };
+
+  const clearCanvas = () => {
+    initCanvas();
+    setFeedback(null);
+  };
+
+  const validate = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    let inkPixels = 0;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const a = data[i+3];
+        if (a > 100 && r < 100) {
+            inkPixels++;
+        }
+    }
+
+    const totalPixels = width * height;
+    const coverage = inkPixels / totalPixels;
+
+    // Lowered threshold slightly as smaller font means less ink area
+    if (coverage > 0.015) { 
+        setFeedback('success');
+        setTimeout(() => {
+            if (currentIndex < HEART_SUTRA.length - 1) {
+                setCurrentIndex(prev => prev + 1);
+                setFeedback(null);
+            }
+        }, 1500);
+    } else {
+        setFeedback('retry');
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-zen-bg relative" ref={containerRef}>
+      
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-4 z-10">
+        <Link to="/" className="p-2 text-gray-600 rounded-full hover:bg-gray-200">
+            <ArrowLeft size={24} />
+        </Link>
+        <div className="flex flex-col items-center">
+            <h2 className="text-lg font-serif font-bold text-zen-ink">般若波罗蜜多心经</h2>
+            <span className="text-xs text-gray-400">{currentIndex + 1} / {HEART_SUTRA.length}</span>
+        </div>
+        <div className="w-10"></div> 
+      </div>
+
+      {/* Main Canvas Area - Padded to prevent edge cutting */}
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden p-4">
+         <canvas 
+            ref={canvasRef}
+            className="touch-none"
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+        />
+
+        {/* Feedback Overlay */}
+        <AnimatePresence>
+            {feedback === 'success' && (
+                <motion.div 
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 2, opacity: 0 }}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                    <div className="w-32 h-32 bg-yellow-400/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm">
+                        <span className="text-5xl font-serif font-bold text-white">善</span>
+                    </div>
+                </motion.div>
+            )}
+            {feedback === 'retry' && (
+                <motion.div 
+                     initial={{ y: 20, opacity: 0 }}
+                     animate={{ y: 0, opacity: 1 }}
+                     exit={{ opacity: 0 }}
+                     className="absolute bottom-10 bg-red-100 text-red-800 px-4 py-2 rounded-lg shadow pointer-events-none z-20"
+                >
+                    笔墨不足，请再临摹
+                </motion.div>
+            )}
+        </AnimatePresence>
+      </div>
+
+      {/* Bottom Controls */}
+      <div className="h-24 bg-white border-t border-gray-100 flex items-center justify-around px-8 pb-safe">
+        <button onClick={clearCanvas} className="flex flex-col items-center text-gray-400 active:text-zen-ink transition">
+            <RotateCcw size={24} />
+            <span className="text-xs mt-1">重写</span>
+        </button>
+
+        <button 
+            onClick={validate}
+            className="w-16 h-16 bg-zen-ink text-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition"
+        >
+            <Check size={32} />
+        </button>
+
+        <button 
+             onClick={() => setCurrentIndex(prev => Math.min(prev + 1, HEART_SUTRA.length - 1))}
+             className="flex flex-col items-center text-gray-400 active:text-zen-ink transition"
+        >
+            <ChevronRight size={24} />
+            <span className="text-xs mt-1">跳过</span>
+        </button>
+      </div>
+
+    </div>
+  );
+}
