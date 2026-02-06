@@ -6,13 +6,23 @@
   "background_color": "#f5f5f0",
   "display": "standalone",
   "orientation": "portrait",
-  "scope": "/",
-  "start_url": "/",
+  "scope": "/zen-app/",
+  "start_url": "/zen-app/",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/zen-app/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
+    },
+    {
+      "src": "/zen-app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/zen-app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }
