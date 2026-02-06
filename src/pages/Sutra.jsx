@@ -8,11 +8,17 @@ const HEART_SUTRA = `观自在菩萨行深般若波罗蜜多时照见五蕴皆�
 export default function Sutra() {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const refCanvasRef = useRef(null);
+  const advanceTimerRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(() => parseInt(localStorage.getItem('zen_sutra_index') || '0'));
   const [isDrawing, setIsDrawing] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'success', 'retry'
 
   const currentChar = HEART_SUTRA[currentIndex];
+
+  useEffect(() => {
+    localStorage.setItem('zen_sutra_index', currentIndex);
+  }, [currentIndex]);
 
   // Initialize Canvas & Guide
   useEffect(() => {
@@ -46,6 +52,7 @@ export default function Sutra() {
     ctx.strokeStyle = '#2c2c2c'; 
 
     drawGuide(ctx, width, height);
+    buildReferenceCanvas(width, height);
   };
 
   const drawGuide = (ctx, width, height) => {
@@ -89,6 +96,66 @@ export default function Sutra() {
     ctx.restore();
   };
 
+  const buildReferenceCanvas = (width, height) => {
+    const dpr = window.devicePixelRatio || 1;
+    if (!refCanvasRef.current) {
+      refCanvasRef.current = document.createElement('canvas');
+    }
+    const offscreen = refCanvasRef.current;
+    offscreen.width = width * dpr;
+    offscreen.height = height * dpr;
+
+    const ctx = offscreen.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // Render target character in solid black — same positioning as drawGuide
+    const size = Math.min(width, height) * 0.75;
+    ctx.font = `400 ${size * 0.8}px "Noto Serif SC", serif`;
+    ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(currentChar, width / 2, height / 2);
+  };
+
+  const calculateOverlap = () => {
+    const canvas = canvasRef.current;
+    const offscreen = refCanvasRef.current;
+    if (!canvas || !offscreen) return 0;
+
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const userData = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+    const refData = offscreen.getContext('2d').getImageData(0, 0, width, height).data;
+
+    let refPixels = 0;
+    let overlapPixels = 0;
+
+    for (let i = 0; i < userData.length; i += 4) {
+      const refAlpha = refData[i + 3];
+      if (refAlpha > 128) {
+        refPixels++;
+        // User ink: dark (r < 80) and opaque (a > 180)
+        // This excludes the guide (alpha ~38) and grid lines (r ~229)
+        if (userData[i + 3] > 180 && userData[i] < 80) {
+          overlapPixels++;
+        }
+      }
+    }
+
+    return refPixels === 0 ? 0 : overlapPixels / refPixels;
+  };
+
+  const triggerAdvance = () => {
+    setFeedback('success');
+    advanceTimerRef.current = setTimeout(() => {
+      if (currentIndex < HEART_SUTRA.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+        setFeedback(null);
+      }
+    }, 1500);
+  };
+
   const getPos = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -123,46 +190,34 @@ export default function Sutra() {
         const ctx = canvasRef.current.getContext('2d');
         ctx.closePath();
         setIsDrawing(false);
+
+        // Auto-check overlap after each stroke
+        if (feedback !== 'success') {
+          const overlap = calculateOverlap();
+          if (overlap >= 0.25) {
+            triggerAdvance();
+          }
+        }
     }
   };
 
   const clearCanvas = () => {
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
     initCanvas();
     setFeedback(null);
   };
 
   const validate = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-    
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-    let inkPixels = 0;
-
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const a = data[i+3];
-        if (a > 100 && r < 100) {
-            inkPixels++;
-        }
-    }
-
-    const totalPixels = width * height;
-    const coverage = inkPixels / totalPixels;
-
-    // Lowered threshold slightly as smaller font means less ink area
-    if (coverage > 0.015) { 
-        setFeedback('success');
-        setTimeout(() => {
-            if (currentIndex < HEART_SUTRA.length - 1) {
-                setCurrentIndex(prev => prev + 1);
-                setFeedback(null);
-            }
-        }, 1500);
+    if (feedback === 'success') return;
+    const overlap = calculateOverlap();
+    if (overlap >= 0.12) {
+      // Lower threshold for manual button press (user is asking to proceed)
+      triggerAdvance();
     } else {
-        setFeedback('retry');
+      setFeedback('retry');
     }
   };
 

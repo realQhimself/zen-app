@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Volume2, VolumeX, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 
 // --- Sound Engine (Advanced Synthesis) ---
 const useInstrumentSound = () => {
@@ -271,8 +271,14 @@ export default function Fish() {
 
       {/* Counter */}
       <div className="absolute top-20 text-center">
-        <div className="text-gray-400 text-sm mb-1">今日功德</div>
+        <div className="text-gray-400 text-sm mb-1">功德</div>
         <div className="text-4xl font-mono font-bold text-zen-ink">{count}</div>
+        <button
+          onClick={(e) => { e.stopPropagation(); setCount(0); }}
+          className="mt-2 text-gray-300 hover:text-gray-500 transition"
+        >
+          <RotateCcw size={16} />
+        </button>
       </div>
 
       {/* Instrument Switcher */}
