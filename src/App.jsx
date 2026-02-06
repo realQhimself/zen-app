@@ -34,7 +34,7 @@ const Navigation = () => {
 
 export default function App() {
   return (
-    <Router>
+    <Router basename="/zen-app">
       <div className="h-[100dvh] flex flex-col">
         <div className="flex-1 overflow-auto">
           <Routes>
