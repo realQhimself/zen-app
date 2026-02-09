@@ -193,14 +193,37 @@ export default function Fish() {
   };
 
   return (
-    <div className="h-full bg-zen-bg flex flex-col items-center justify-center relative select-none overflow-hidden touch-manipulation">
-      
+    <div
+      className="h-full flex flex-col items-center justify-center relative select-none overflow-hidden touch-manipulation"
+      style={{
+        backgroundImage: `url(${import.meta.env.BASE_URL}images/fish-bg.png)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: '#f5f5f0',
+      }}
+    >
+      {/* Ambient Particles */}
+      {[...Array(4)].map((_, i) => (
+        <div key={`p-${i}`} className="zen-particle" style={{
+          left: `${10 + i * 25}%`,
+          top: `${15 + (i % 2) * 50}%`,
+          '--size': `${2 + i * 0.5}px`,
+          '--duration': `${12 + i * 3}s`,
+          '--delay': `${i * 2}s`,
+          '--dx': `${(i % 2 ? 15 : -15)}px`,
+          '--dy': `-${30 + i * 10}px`,
+          '--dx2': `${(i % 2 ? -8 : 8)}px`,
+          '--dy2': `-${60 + i * 15}px`,
+          '--max-opacity': '0.2',
+        }} />
+      ))}
+
       {/* Sound Toggle */}
-      <button 
+      <button
         onClick={(e) => { e.stopPropagation(); setSoundEnabled(!soundEnabled); }}
-        className="absolute top-4 right-4 p-3 bg-white/50 rounded-full text-gray-600 z-20"
+        className="absolute top-4 right-4 p-3 bg-white/40 backdrop-blur-sm rounded-full text-zen-stone z-20 border border-white/30"
       >
-        {soundEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
+        {soundEnabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
       </button>
 
       {/* Floating Merits */}
@@ -212,7 +235,7 @@ export default function Fish() {
                 animate={{ opacity: 0, y: -150 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="absolute font-serif font-bold text-xl pointer-events-none z-10"
+                className="absolute font-serif font-bold text-lg tracking-wider pointer-events-none z-10"
                 style={{ top: '40%', color: currentInst.color }}
             >
                 功德 +1
@@ -221,24 +244,25 @@ export default function Fish() {
       </AnimatePresence>
 
       {/* Counter */}
-      <div className="absolute top-20 text-center">
-        <div className="text-gray-400 text-sm mb-1">功德</div>
-        <div className="text-4xl font-mono font-bold text-zen-ink">{count}</div>
+      <div className="absolute top-16 text-center">
+        <div className="text-zen-stone text-xs tracking-widest mb-2">功德</div>
+        <div className="text-5xl font-mono font-bold text-zen-ink tracking-tight">{count.toLocaleString()}</div>
+        <div className="h-px w-16 mx-auto mt-3 bg-gradient-to-r from-transparent via-zen-stone/30 to-transparent" />
         <button
           onClick={(e) => { e.stopPropagation(); setCount(0); }}
-          className="mt-2 text-gray-300 hover:text-gray-500 transition"
+          className="mt-2 text-zen-stone/40 hover:text-zen-stone transition"
         >
-          <RotateCcw size={16} />
+          <RotateCcw size={14} />
         </button>
       </div>
 
       {/* Instrument Switcher */}
-      <div className="absolute top-40 flex items-center gap-4 bg-white/60 backdrop-blur px-4 py-2 rounded-full shadow-sm z-20">
-        <button onClick={() => changeInstrument('prev')} className="p-1 text-gray-500 hover:text-black">
+      <div className="absolute top-40 flex items-center gap-4 bg-white/50 backdrop-blur-lg px-5 py-2.5 rounded-full shadow-sm border border-white/40 z-20">
+        <button onClick={() => changeInstrument('prev')} className="p-1 text-zen-stone hover:text-zen-ink transition">
             <ChevronLeft size={20} />
         </button>
         <span className="font-serif font-bold w-12 text-center text-sm">{currentInst.name}</span>
-        <button onClick={() => changeInstrument('next')} className="p-1 text-gray-500 hover:text-black">
+        <button onClick={() => changeInstrument('next')} className="p-1 text-zen-stone hover:text-zen-ink transition">
             <ChevronRight size={20} />
         </button>
       </div>
@@ -255,8 +279,8 @@ export default function Fish() {
       >
         {currentInst.render()}
 
-        {/* Mallet hint */}
-        <div className="absolute -right-4 -bottom-4 text-sm text-gray-400 opacity-50 pointer-events-none">
+        {/* Tap hint */}
+        <div className="absolute -right-4 -bottom-4 text-xs text-zen-stone/40 pointer-events-none">
             (点击敲击)
         </div>
       </motion.div>

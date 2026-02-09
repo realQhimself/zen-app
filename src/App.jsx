@@ -13,9 +13,10 @@ const Navigation = () => {
   const NavItem = ({ to, icon: Icon, label }) => {
     const isActive = location.pathname === to;
     return (
-      <Link to={to} className={`flex flex-col items-center p-2 transition-colors ${isActive ? 'text-zen-red' : 'text-gray-400'}`}>
-        <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-        <span className="text-xs mt-1">{label}</span>
+      <Link to={to} className={`flex flex-col items-center p-2 transition-colors ${isActive ? 'text-zen-red' : 'text-zen-stone'}`}>
+        <Icon size={24} strokeWidth={isActive ? 2.5 : 1.8} />
+        <span className="text-xs mt-0.5">{label}</span>
+        {isActive && <div className="nav-dot mt-0.5" />}
       </Link>
     );
   };
@@ -24,7 +25,7 @@ const Navigation = () => {
   if (location.pathname === '/sutra') return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe pt-2 px-6 flex justify-around items-center h-16 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/60 backdrop-blur-xl border-t border-white/30 pb-safe pt-2 px-6 flex justify-around items-center h-16 z-50">
       <NavItem to="/" icon={User} label="修行" />
       <NavItem to="/meditation" icon={Wind} label="禅修" />
       <NavItem to="/fish" icon={Music} label="木鱼" />

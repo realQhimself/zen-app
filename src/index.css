@@ -7,9 +7,160 @@
   --color-zen-ink: #2c2c2c;
   --color-zen-red: #8a3b3b;
   --color-zen-dark: #1a1a1a;
+  --color-zen-sand: #e8e4dc;
+  --color-zen-stone: #a8a8a0;
+  --color-zen-gold: #c4a862;
+  --color-zen-moss: #6b7c5e;
+  --color-zen-cloud: #fafaf7;
   --font-serif: "Noto Serif SC", serif;
 }
 
 body {
   @apply bg-zen-bg text-zen-ink font-serif overflow-hidden select-none;
+}
+
+/* --- Frosted Glass Card --- */
+.zen-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px rgba(44, 44, 44, 0.06);
+}
+
+/* --- Ambient Floating Particles --- */
+.zen-particle {
+  position: absolute;
+  width: var(--size, 3px);
+  height: var(--size, 3px);
+  background: radial-gradient(circle, rgba(168, 168, 160, 0.4), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: zen-float var(--duration, 12s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+
+@keyframes zen-float {
+  0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+  15%  { opacity: var(--max-opacity, 0.4); }
+  50%  { transform: translate(var(--dx, 20px), var(--dy, -60px)) scale(1.2); opacity: var(--max-opacity, 0.3); }
+  85%  { opacity: var(--max-opacity, 0.15); }
+  100% { transform: translate(var(--dx2, -10px), var(--dy2, -120px)) scale(0.8); opacity: 0; }
+}
+
+/* --- Incense Smoke Effect --- */
+.zen-smoke {
+  position: absolute;
+  width: var(--size, 6px);
+  height: var(--size, 6px);
+  background: radial-gradient(circle, rgba(200, 195, 185, 0.5), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(2px);
+  animation: zen-smoke-rise var(--duration, 8s) ease-out infinite;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+
+@keyframes zen-smoke-rise {
+  0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
+  10%  { opacity: 0.4; }
+  40%  { transform: translate(var(--sway, 15px), -40px) scale(1); opacity: 0.25; }
+  70%  { transform: translate(var(--sway2, -8px), -80px) scale(1.5); opacity: 0.1; }
+  100% { transform: translate(var(--sway3, 5px), -120px) scale(2); opacity: 0; }
+}
+
+/* --- Nav Active Dot --- */
+.nav-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-zen-red);
+  animation: nav-pulse 2s ease-in-out infinite;
+}
+
+@keyframes nav-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* --- Garden Mini-Game Animations --- */
+
+/* Warm golden glow pulse for lantern proximity */
+.garden-item-glow {
+  animation: itemGlow 2s ease-in-out infinite;
+}
+@keyframes itemGlow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255,200,50,0)); }
+  50% { filter: drop-shadow(0 0 14px rgba(255,200,50,0.7)); }
+}
+
+/* Gentle rotation for bonsai/tree */
+.garden-item-sway {
+  animation: itemSway 3s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+@keyframes itemSway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+/* Scale pulse for pond */
+.garden-item-ripple {
+  animation: itemRipple 2s ease-in-out infinite;
+}
+@keyframes itemRipple {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* Circular progress fill for long-press delete (1 second) */
+.delete-ring {
+  animation: deleteRingFill 1s linear forwards;
+}
+@keyframes deleteRingFill {
+  from { stroke-dashoffset: 157; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Subtle bounce when monk is not moving */
+.monk-idle {
+  animation: monkBounce 2s ease-in-out infinite;
+}
+@keyframes monkBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Smoke particles near incense when monk is close */
+.garden-item-smoke::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, rgba(200,195,185,0.6), transparent);
+  border-radius: 50%;
+  filter: blur(1px);
+  animation: incenseSmoke 3s ease-out infinite;
+}
+@keyframes incenseSmoke {
+  0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+  20% { opacity: 0.5; }
+  100% { transform: translate(-50%, -40px) scale(2); opacity: 0; }
+}
+
+/* Ghost preview opacity for item placement mode */
+.placement-ghost {
+  opacity: 0.5;
+  animation: ghostPulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes ghostPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
 }

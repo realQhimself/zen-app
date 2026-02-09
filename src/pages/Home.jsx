@@ -297,8 +297,29 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-full pb-20 bg-zen-bg">
-      <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-md mx-auto px-5">
+    <div className="min-h-full pb-20 relative overflow-hidden" style={{
+      backgroundImage: `url(${import.meta.env.BASE_URL}images/home-bg.png)`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center top',
+      backgroundColor: '#f5f5f0',
+    }}>
+      {/* Ambient Particles */}
+      {[...Array(5)].map((_, i) => (
+        <div key={`p-${i}`} className="zen-particle fixed" style={{
+          left: `${10 + i * 20}%`,
+          top: `${30 + (i % 3) * 20}%`,
+          '--size': `${2 + i * 0.5}px`,
+          '--duration': `${15 + i * 4}s`,
+          '--delay': `${i * 3}s`,
+          '--dx': `${(i % 2 ? 15 : -15)}px`,
+          '--dy': `-${50 + i * 10}px`,
+          '--dx2': `${(i % 2 ? -8 : 8)}px`,
+          '--dy2': `-${90 + i * 15}px`,
+          '--max-opacity': '0.15',
+        }} />
+      ))}
+
+      <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-md mx-auto px-5 relative z-10">
 
         {/* Rank Header */}
         <motion.div variants={fadeUp} className="pt-6 pb-4 flex items-center gap-4">
@@ -308,45 +329,50 @@ export default function Home() {
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-serif font-bold text-zen-ink">{rank.name}</span>
-              <span className="text-xs text-gray-400">Lv.{rank.level}</span>
+              <span className="text-xs text-zen-stone">Lv.{rank.level}</span>
             </div>
-            <p className="text-xs text-gray-400 mt-0.5">{rank.meaning}</p>
+            <p className="text-xs text-zen-stone mt-0.5">{rank.meaning}</p>
+            <div className="h-0.5 w-12 mt-1 rounded-full bg-gradient-to-r from-zen-red/60 to-transparent" />
             {/* XP Bar */}
-            <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="mt-2 h-2.5 bg-zen-sand rounded-full overflow-hidden shadow-inner">
               <motion.div
-                className="h-full bg-zen-red rounded-full"
+                className="h-full bg-gradient-to-r from-zen-red to-zen-gold rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPct}%` }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               />
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-[10px] text-gray-400 font-mono">{profile.totalXP} XP</span>
-              {nextRank && <span className="text-[10px] text-gray-400 font-mono">→ {nextRank.name} ({nextRank.xp})</span>}
+              <span className="text-[10px] text-zen-stone font-mono">{profile.totalXP} XP</span>
+              {nextRank && <span className="text-[10px] text-zen-stone font-mono">→ {nextRank.name} ({nextRank.xp})</span>}
             </div>
           </div>
         </motion.div>
 
         {/* Balance */}
-        <motion.div variants={fadeUp} className="flex items-center gap-1 mb-4">
+        <motion.div variants={fadeUp} className="inline-flex items-center gap-1.5 mb-4 bg-zen-cloud px-3 py-1.5 rounded-full shadow-sm border border-zen-sand">
           <span className="text-zen-red text-xs">●</span>
           <span className="text-xs font-mono font-bold text-zen-ink">{balance}</span>
-          <span className="text-[10px] text-gray-400">可用功德</span>
+          <span className="text-[10px] text-zen-stone">功德</span>
         </motion.div>
 
         {/* Zen Quote */}
-        <motion.div variants={fadeUp} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-5">
-          <p className="text-sm text-gray-500 leading-relaxed font-serif">"{quote}"</p>
+        <motion.div variants={fadeUp} className="zen-card p-5 mb-5 relative overflow-hidden">
+          <p className="text-sm text-zen-stone leading-relaxed font-serif italic">
+            <span className="text-zen-red/30 text-2xl leading-none mr-1 not-italic">"</span>
+            {quote}
+            <span className="text-zen-red/30 text-2xl leading-none ml-1 not-italic">"</span>
+          </p>
         </motion.div>
 
         {/* Task Tabs */}
-        <motion.div variants={fadeUp} className="flex gap-1 mb-3 bg-gray-100 rounded-lg p-0.5">
+        <motion.div variants={fadeUp} className="flex gap-1 mb-3 bg-zen-sand/50 rounded-lg p-0.5">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
               className={`flex-1 py-2 text-xs font-serif rounded-md transition ${
-                activeTab === t.key ? 'bg-white text-zen-ink shadow-sm font-bold' : 'text-gray-400'
+                activeTab === t.key ? 'bg-white/80 backdrop-blur text-zen-ink shadow-sm font-bold' : 'text-zen-stone'
               }`}
             >
               {t.label}
@@ -357,7 +383,7 @@ export default function Home() {
         {/* Task List */}
         <motion.div variants={fadeUp} className="space-y-2 mb-5">
           {activeTab === 'habit' && profile.habits.map(h => (
-            <div key={h.id} className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+            <div key={h.id} className="zen-card px-4 py-3 flex items-center gap-3">
               {h.positive && (
                 <button
                   onClick={() => handleHabitTap(h.id, '+')}
@@ -386,7 +412,7 @@ export default function Home() {
           {activeTab === 'daily' && profile.dailies.map(d => {
             const done = d.completedDates.includes(today);
             return (
-              <div key={d.id} className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+              <div key={d.id} className="zen-card px-4 py-3 flex items-center gap-3">
                 <button
                   onClick={() => !done && handleDailyToggle(d.id)}
                   className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition ${
@@ -411,7 +437,7 @@ export default function Home() {
           {activeTab === 'todo' && (
             <>
               {profile.todos.filter(t => !t.completed).map(t => (
-                <div key={t.id} className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+                <div key={t.id} className="zen-card px-4 py-3 flex items-center gap-3">
                   <button
                     onClick={() => handleTodoToggle(t.id)}
                     className="w-6 h-6 rounded-md border-2 border-gray-300 flex items-center justify-center active:border-zen-red transition"
@@ -425,7 +451,7 @@ export default function Home() {
                 </div>
               ))}
               {profile.todos.filter(t => t.completed).length > 0 && (
-                <p className="text-[10px] text-gray-300 px-1">已完成</p>
+                <p className="text-[10px] text-zen-stone/50 px-1">已完成</p>
               )}
               {profile.todos.filter(t => t.completed).map(t => (
                 <div key={t.id} className="bg-gray-50 rounded-xl px-4 py-2 flex items-center gap-3 opacity-50">
@@ -449,27 +475,31 @@ export default function Home() {
 
         {/* Quick Stats */}
         <motion.div variants={fadeUp} className="grid grid-cols-4 gap-2 mb-5">
-          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 text-center">
+          <div className="zen-card p-3 text-center">
+            <Music size={14} className="text-zen-stone mx-auto mb-1" />
             <p className="text-lg font-mono font-bold text-zen-ink">{fishCount.toLocaleString()}</p>
-            <p className="text-[10px] text-gray-400">木鱼</p>
+            <p className="text-[10px] text-zen-stone">木鱼</p>
           </div>
-          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 text-center">
+          <div className="zen-card p-3 text-center">
+            <Wind size={14} className="text-zen-stone mx-auto mb-1" />
             <p className="text-lg font-mono font-bold text-zen-ink">{meditation.sessions}</p>
-            <p className="text-[10px] text-gray-400">禅修</p>
+            <p className="text-[10px] text-zen-stone">禅修</p>
           </div>
-          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 text-center">
+          <div className="zen-card p-3 text-center">
+            <PenTool size={14} className="text-zen-stone mx-auto mb-1" />
             <p className="text-lg font-mono font-bold text-zen-ink">{sutraIndex}</p>
-            <p className="text-[10px] text-gray-400">抄经</p>
+            <p className="text-[10px] text-zen-stone">抄经</p>
           </div>
-          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 text-center">
+          <div className="zen-card p-3 text-center">
+            <Leaf size={14} className="text-zen-stone mx-auto mb-1" />
             <p className="text-lg font-mono font-bold text-zen-ink">{balance}</p>
-            <p className="text-[10px] text-gray-400">功德</p>
+            <p className="text-[10px] text-zen-stone">功德</p>
           </div>
         </motion.div>
 
         {/* Quick Actions */}
         <motion.div variants={fadeUp}>
-          <p className="text-[10px] text-gray-400 mb-2 font-serif">开始修行</p>
+          <p className="text-[10px] text-zen-stone mb-2 font-serif">开始修行</p>
           <div className="grid grid-cols-4 gap-2">
             {[
               { to: '/meditation', icon: Wind, label: '禅修' },
@@ -480,10 +510,10 @@ export default function Home() {
               <Link
                 key={to}
                 to={to}
-                className="flex flex-col items-center gap-1 p-3 bg-white rounded-xl shadow-sm border border-gray-100 active:bg-gray-50 transition"
+                className="flex flex-col items-center gap-1 p-3 zen-card active:bg-white/50 transition"
               >
                 <Icon size={18} className="text-zen-ink" />
-                <span className="text-[10px] text-gray-500 font-serif">{label}</span>
+                <span className="text-[10px] text-zen-stone font-serif">{label}</span>
               </Link>
             ))}
           </div>

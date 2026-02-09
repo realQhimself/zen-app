@@ -126,25 +126,56 @@ export default function Meditation() {
 
   return (
     <div className="h-full flex flex-col bg-zen-dark text-white relative overflow-hidden">
-      
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-800 to-zen-dark opacity-50"></div>
+
+      {/* Background — Pixel Art Temple */}
+      <div className="absolute inset-0" style={{
+        backgroundImage: `url(${import.meta.env.BASE_URL}images/meditation-bg.png)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }} />
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Floating Light Specks */}
+      {[...Array(8)].map((_, i) => (
+        <div
+          key={`star-${i}`}
+          className="zen-particle"
+          style={{
+            left: `${5 + i * 12}%`,
+            top: `${10 + (i * 17) % 70}%`,
+            '--size': `${1.5 + (i % 3)}px`,
+            '--duration': `${8 + i * 2}s`,
+            '--delay': `${i * 1.5}s`,
+            '--dx': `${(i % 2 ? 10 : -10)}px`,
+            '--dy': `${(i % 2 ? -20 : 20)}px`,
+            '--dx2': `${(i % 2 ? -5 : 5)}px`,
+            '--dy2': `${(i % 2 ? -40 : 40)}px`,
+            '--max-opacity': '0.3',
+            background: 'radial-gradient(circle, rgba(255,255,240,0.6), transparent)',
+          }}
+        />
+      ))}
 
       {/* Main Content */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-8">
-        
+
         {/* Breathing Circle */}
         <div className="relative w-64 h-64 flex items-center justify-center mb-12">
-            {/* Outer Glow */}
-            <motion.div 
-                className="absolute inset-0 rounded-full bg-white blur-3xl opacity-10"
-                animate={phase === PHASES.INHALE || phase === PHASES.HOLD ? { opacity: 0.2, scale: 1.2 } : { opacity: 0.1, scale: 1 }}
+            {/* Outer Glow (double layer) */}
+            <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.15), transparent 60%)',
+                  filter: 'blur(20px)',
+                }}
+                animate={phase === PHASES.INHALE || phase === PHASES.HOLD ? { opacity: 0.4, scale: 1.3 } : { opacity: 0.15, scale: 1 }}
                 transition={{ duration: 2 }}
             />
-            
+
             {/* Core Circle */}
             <motion.div
-                className="w-40 h-40 bg-white rounded-full shadow-[0_0_50px_rgba(255,255,255,0.3)] flex items-center justify-center"
+                className="w-40 h-40 bg-white rounded-full shadow-[0_0_60px_rgba(255,255,255,0.25),0_0_120px_rgba(255,255,255,0.1)] flex items-center justify-center"
                 variants={variants}
                 initial={PHASES.IDLE}
                 animate={phase}
@@ -158,23 +189,23 @@ export default function Meditation() {
         <div className={`text-3xl font-serif font-light tracking-[0.5em] mb-4 ${phaseColor[phase]}`}>
             {phaseText[phase]}
         </div>
-        
+
         <p className="text-gray-500 text-sm mb-12">
            {phase === PHASES.HOLD ? "保持静止，感受当下" : "跟随呼吸的节奏"}
         </p>
 
         {/* Controls */}
         <div className="flex gap-8 items-center">
-            <button 
+            <button
                 onClick={() => setShowSettings(true)}
-                className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition backdrop-blur-sm"
+                className="p-4 rounded-full bg-white/5 hover:bg-white/10 transition border border-white/10"
             >
                 <Settings size={24} />
             </button>
 
-            <button 
+            <button
                 onClick={toggleStatus}
-                className={`p-6 rounded-full transition shadow-lg ${status === 'running' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white text-zen-dark hover:bg-gray-100'}`}
+                className={`p-6 rounded-full transition ${status === 'running' ? 'bg-gray-700 hover:bg-gray-600 shadow-lg' : 'bg-white text-zen-dark hover:bg-gray-100 shadow-[0_0_30px_rgba(255,255,255,0.2)]'}`}
             >
                 {status === 'running' ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
             </button>

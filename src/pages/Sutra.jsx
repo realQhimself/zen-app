@@ -232,18 +232,34 @@ export default function Sutra() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-zen-bg relative" ref={containerRef}>
-      
+    <div
+      className="h-full flex flex-col relative"
+      ref={containerRef}
+      style={{
+        backgroundImage: `url(${import.meta.env.BASE_URL}images/sutra-paper.png)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: '#f5f5f0',
+      }}
+    >
+
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-4 z-10">
-        <Link to="/" className="p-2 text-gray-600 rounded-full hover:bg-gray-200">
+      <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-4 z-10 bg-zen-bg/80 backdrop-blur-lg border-b border-zen-sand/50">
+        <Link to="/" className="p-2 text-zen-stone rounded-full hover:bg-zen-sand/50 transition">
             <ArrowLeft size={24} />
         </Link>
         <div className="flex flex-col items-center">
-            <h2 className="text-lg font-serif font-bold text-zen-ink">般若波罗蜜多心经</h2>
-            <span className="text-xs text-gray-400">{currentIndex + 1} / {HEART_SUTRA.length}</span>
+            <h2 className="text-lg font-serif font-bold text-zen-ink">
+              <span className="text-zen-red/60">般若</span>波罗蜜多心经
+            </h2>
+            <span className="text-xs text-zen-stone">{currentIndex + 1} / {HEART_SUTRA.length}</span>
         </div>
-        <div className="w-10"></div> 
+        <div className="w-10"></div>
+        {/* Progress bar */}
+        <div
+          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-zen-red/60 to-zen-gold/40 transition-all duration-500"
+          style={{ width: `${((currentIndex + 1) / HEART_SUTRA.length) * 100}%` }}
+        />
       </div>
 
       {/* Main Canvas Area - Padded to prevent edge cutting */}
@@ -263,23 +279,23 @@ export default function Sutra() {
         {/* Feedback Overlay */}
         <AnimatePresence>
             {feedback === 'success' && (
-                <motion.div 
+                <motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 2, opacity: 0 }}
                     className="absolute inset-0 flex items-center justify-center pointer-events-none"
                 >
-                    <div className="w-32 h-32 bg-yellow-400/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm">
-                        <span className="text-5xl font-serif font-bold text-white">善</span>
+                    <div className="w-28 h-28 bg-gradient-to-br from-zen-gold/80 to-zen-red/60 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(196,168,98,0.4)] backdrop-blur">
+                        <span className="text-4xl font-serif font-bold text-white">善</span>
                     </div>
                 </motion.div>
             )}
             {feedback === 'retry' && (
-                <motion.div 
+                <motion.div
                      initial={{ y: 20, opacity: 0 }}
                      animate={{ y: 0, opacity: 1 }}
                      exit={{ opacity: 0 }}
-                     className="absolute bottom-10 bg-red-100 text-red-800 px-4 py-2 rounded-lg shadow pointer-events-none z-20"
+                     className="absolute bottom-10 bg-zen-sand text-zen-red px-4 py-2 rounded-lg shadow-sm pointer-events-none z-20 border border-zen-red/10"
                 >
                     笔墨不足，请再临摹
                 </motion.div>
@@ -288,24 +304,24 @@ export default function Sutra() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="h-24 bg-white border-t border-gray-100 flex items-center justify-around px-8 pb-safe">
-        <button onClick={clearCanvas} className="flex flex-col items-center text-gray-400 active:text-zen-ink transition">
-            <RotateCcw size={24} />
+      <div className="h-24 bg-white/70 backdrop-blur-xl border-t border-zen-sand/30 flex items-center justify-around px-8 pb-safe">
+        <button onClick={clearCanvas} className="flex flex-col items-center text-zen-stone active:text-zen-ink transition">
+            <RotateCcw size={22} />
             <span className="text-xs mt-1">重写</span>
         </button>
 
-        <button 
+        <button
             onClick={validate}
-            className="w-16 h-16 bg-zen-ink text-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition"
+            className="w-16 h-16 bg-zen-ink text-white rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(44,44,44,0.25)] active:scale-95 transition"
         >
             <Check size={32} />
         </button>
 
-        <button 
+        <button
              onClick={() => setCurrentIndex(prev => Math.min(prev + 1, HEART_SUTRA.length - 1))}
-             className="flex flex-col items-center text-gray-400 active:text-zen-ink transition"
+             className="flex flex-col items-center text-zen-stone active:text-zen-ink transition"
         >
-            <ChevronRight size={24} />
+            <ChevronRight size={22} />
             <span className="text-xs mt-1">跳过</span>
         </button>
       </div>
