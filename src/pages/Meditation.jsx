@@ -2,15 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Settings, X, Volume2, VolumeX } from 'lucide-react';
 import { MOODS, getGuidedLines } from '../data/guidedScripts';
-
-// --- XP Helper ---
-const awardXP = (amount) => {
-  try {
-    const p = JSON.parse(localStorage.getItem('zen_profile') || '{"totalXP":0,"spentXP":0}');
-    p.totalXP += amount;
-    localStorage.setItem('zen_profile', JSON.stringify(p));
-  } catch { /* ignore */ }
-};
+import { addXP, safeLoad, safeSave, KEYS } from '../utils/zen';
 
 const PHASES = {
   IDLE: 'idle',
@@ -34,14 +26,14 @@ export default function Meditation() {
   const [muted, setMuted] = useState(false);
 
   // --- Guided Meditation State ---
-  const [mode, setMode] = useState(() => localStorage.getItem('zen_meditation_mode') || 'free');
+  const [mode, setMode] = useState(() => safeLoad(KEYS.MEDITATION_MODE, 'free'));
   const [selectedMood, setSelectedMood] = useState(null);
   const [guidedLines, setGuidedLines] = useState([]);
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const cycleCountRef = useRef(0);
 
   useEffect(() => {
-    localStorage.setItem('zen_meditation_mode', mode);
+    safeSave(KEYS.MEDITATION_MODE, mode);
   }, [mode]);
 
   // Load guided lines when mood is selected (preload, no async in toggleStatus)
@@ -170,6 +162,9 @@ export default function Meditation() {
 
   // Session tracking
   const startTimeRef = useRef(null);
+  const phaseStartRef = useRef(null);
+  const phaseDurationRef = useRef(0);
+  const wakeLockRef = useRef(null);
 
   // Haptic Feedback Helper
   const vibrate = (pattern) => {
@@ -178,50 +173,84 @@ export default function Meditation() {
     }
   };
 
+  // Wake Lock — keep screen on during meditation
   useEffect(() => {
-    let timer;
     if (status === 'running') {
-      if (phase === PHASES.IDLE) {
-        setPhase(PHASES.INHALE);
-        setTimeLeft(config.inhale);
-        vibrate(50); // Short blip for start
-      } else {
-        if (timeLeft > 0) {
-          timer = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
-        } else {
-          // Phase transition
-          switch (phase) {
-            case PHASES.INHALE:
-              setPhase(PHASES.HOLD);
-              setTimeLeft(config.hold);
-              vibrate(100); // Pulse for Hold
-              break;
-            case PHASES.HOLD:
-              setPhase(PHASES.EXHALE);
-              setTimeLeft(config.exhale);
-              vibrate([50, 50, 50]); // Double pulse for Exhale
-              break;
-            case PHASES.EXHALE:
-              setPhase(PHASES.INHALE); // Loop back
-              setTimeLeft(config.inhale);
-              vibrate(50); // Short blip for Inhale
-              // Advance guided text on each breath cycle
-              if (mode === 'guided' && guidedLines.length > 0) {
-                cycleCountRef.current += 1;
-                if (cycleCountRef.current < guidedLines.length) {
-                  setCurrentLineIndex(cycleCountRef.current);
-                }
-              }
-              break;
+      const acquireWakeLock = async () => {
+        try {
+          if ('wakeLock' in navigator) {
+            wakeLockRef.current = await navigator.wakeLock.request('screen');
+          }
+        } catch { /* user denied or unsupported */ }
+      };
+      acquireWakeLock();
+      const onVisChange = () => { if (document.visibilityState === 'visible') acquireWakeLock(); };
+      document.addEventListener('visibilitychange', onVisChange);
+      return () => {
+        document.removeEventListener('visibilitychange', onVisChange);
+        if (wakeLockRef.current) { wakeLockRef.current.release(); wakeLockRef.current = null; }
+      };
+    }
+    if (wakeLockRef.current) { wakeLockRef.current.release(); wakeLockRef.current = null; }
+  }, [status]);
+
+  // Start a new phase with Date.now() anchor
+  const startPhase = useCallback((newPhase, duration) => {
+    setPhase(newPhase);
+    setTimeLeft(duration);
+    phaseStartRef.current = Date.now();
+    phaseDurationRef.current = duration;
+  }, []);
+
+  // Advance to next phase
+  const advancePhase = useCallback(() => {
+    switch (phase) {
+      case PHASES.INHALE:
+        startPhase(PHASES.HOLD, config.hold);
+        vibrate(100);
+        break;
+      case PHASES.HOLD:
+        startPhase(PHASES.EXHALE, config.exhale);
+        vibrate([50, 50, 50]);
+        break;
+      case PHASES.EXHALE:
+        startPhase(PHASES.INHALE, config.inhale);
+        vibrate(50);
+        if (mode === 'guided' && guidedLines.length > 0) {
+          cycleCountRef.current += 1;
+          if (cycleCountRef.current < guidedLines.length) {
+            setCurrentLineIndex(cycleCountRef.current);
           }
         }
-      }
-    } else {
-        setPhase(PHASES.IDLE);
-        setTimeLeft(0);
+        break;
     }
-    return () => clearTimeout(timer);
-  }, [status, phase, timeLeft, config]);
+  }, [phase, config, mode, guidedLines.length, startPhase]);
+
+  // Date.now()-based tick: resilient to screen lock / setTimeout drift
+  useEffect(() => {
+    if (status === 'running') {
+      if (phase === PHASES.IDLE) {
+        startPhase(PHASES.INHALE, config.inhale);
+        vibrate(50);
+        return;
+      }
+
+      const tick = () => {
+        const elapsed = (Date.now() - phaseStartRef.current) / 1000;
+        const remaining = Math.max(0, Math.ceil(phaseDurationRef.current - elapsed));
+        setTimeLeft(remaining);
+        if (remaining <= 0) {
+          advancePhase();
+        }
+      };
+
+      const timer = setInterval(tick, 250);
+      return () => clearInterval(timer);
+    } else {
+      setPhase(PHASES.IDLE);
+      setTimeLeft(0);
+    }
+  }, [status, phase, config, startPhase, advancePhase]);
 
   const toggleStatus = () => {
     if (status === 'running') {
@@ -229,13 +258,11 @@ export default function Meditation() {
       if (startTimeRef.current) {
         const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
         if (elapsed > 5) { // Only count sessions longer than 5 seconds
-          try {
-            const saved = JSON.parse(localStorage.getItem('zen_meditation') || '{"sessions":0,"totalSeconds":0}');
-            saved.sessions += 1;
-            saved.totalSeconds += elapsed;
-            localStorage.setItem('zen_meditation', JSON.stringify(saved));
-          } catch { /* ignore */ }
-          awardXP(Math.max(1, Math.floor(elapsed / 60) * 5)); // +5 XP per minute, min 1
+          const stats = safeLoad(KEYS.MEDITATION, { sessions: 0, totalSeconds: 0 });
+          stats.sessions += 1;
+          stats.totalSeconds += elapsed;
+          safeSave(KEYS.MEDITATION, stats);
+          addXP(Math.max(1, Math.floor(elapsed / 60) * 5)); // +5 XP per minute, min 1
         }
         startTimeRef.current = null;
       }

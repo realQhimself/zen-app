@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
-
-// --- XP Helper ---
-const awardXP = (amount) => {
-  try {
-    const p = JSON.parse(localStorage.getItem('zen_profile') || '{"totalXP":0,"spentXP":0}');
-    p.totalXP += amount;
-    localStorage.setItem('zen_profile', JSON.stringify(p));
-  } catch { /* ignore */ }
-};
+import { addXP, safeLoad, safeSave, KEYS } from '../utils/zen';
 
 // --- Sound Engine (Real Audio Samples) ---
 const AUDIO_FILES = {
@@ -146,7 +138,7 @@ const INSTRUMENTS = [
 ];
 
 export default function Fish() {
-  const [count, setCount] = useState(() => parseInt(localStorage.getItem('zen_fish_count') || '0'));
+  const [count, setCount] = useState(() => safeLoad(KEYS.FISH_COUNT, 0));
   const [merits, setMerits] = useState([]);
   const [currentInstIdx, setCurrentInstIdx] = useState(0);
   const { playSound, enabled: soundEnabled, setEnabled: setSoundEnabled, initAudio } = useInstrumentSound();
@@ -165,7 +157,7 @@ export default function Fish() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('zen_fish_count', count);
+    safeSave(KEYS.FISH_COUNT, count);
   }, [count]);
 
   const changeInstrument = (direction) => {
@@ -183,7 +175,7 @@ export default function Fish() {
     if (navigator.vibrate) navigator.vibrate(50);
 
     setCount(c => c + 1);
-    awardXP(1);
+    addXP(1);
 
     // Add floating merit text
     const id = Date.now();

@@ -13,18 +13,33 @@ A mobile-first meditation & mindfulness practice app with pixel art aesthetics.
 ## Project Structure
 ```
 src/
-  App.jsx          — Router + bottom navigation
-  index.css        — Tailwind theme, all CSS animations
+  App.jsx              — Router + bottom navigation
+  index.css            — Tailwind theme, all CSS animations
+  utils/
+    zen.js             — Shared: safeLoad/safeSave, XP helpers, RANKS, storage keys
+    zen.test.js        — Unit tests (vitest)
+  hooks/
+    useWeather.js      — Weather data hook
+    useGardenState.js  — Garden state (check-in, place/remove items)
+    useMonkMovement.js — Monk movement, proximity detection, keyboard/mobile input
+  components/
+    WeatherEffects.jsx — Weather overlay components
+    garden/
+      gardenData.js    — Items, constants, default state
+      NPCs.jsx         — Buddha + Muyu SVGs and NPC wrappers
+      VirtualJoystick.jsx — Mobile joystick + desktop keyboard hint
+      ItemRenderer.jsx — Placed item rendering, long-press delete
+      ItemPicker.jsx   — Bottom sheet item picker
   pages/
-    Home.jsx       — Profile, ranks, habits, dailies, todos
-    Meditation.jsx — Breathing guide with BGM
-    Fish.jsx       — Instrument simulator (muyu, bowl, drum)
-    Garden.jsx     — Mini-game: monk movement, NPC interactions, item placement
-    Sutra.jsx      — Heart Sutra character-by-character copying
+    Home.jsx           — Profile, ranks, habits, dailies, todos
+    Meditation.jsx     — Breathing guide (Date.now engine + Wake Lock)
+    Fish.jsx           — Instrument simulator (muyu, bowl, drum)
+    Garden.jsx         — Zen garden (assembles components above)
+    Sutra.jsx          — Heart Sutra character-by-character copying
 public/
-  audio/           — All sound files (.mp3, .m4a, .wav)
-  images/          — Background PNGs and pixel art sprites
-    garden/        — Monk sprites, placeable item sprites
+  audio/               — Sound files (.mp3, .m4a)
+  images/              — Backgrounds and pixel art sprites
+    garden/            — Monk sprites, placeable item sprites
 ```
 
 ## Key Conventions
@@ -47,7 +62,10 @@ public/
   - `zen_garden` — { cycleStartDate, checkIns[], items[] }
   - `zen_monk_pos` — { x, y }
   - `zen_garden_muted` — boolean
-- XP helpers (`readProfile`, `addXP`, `spendXP`, `refundXP`) are defined in Garden.jsx
+- XP helpers (`readProfile`, `addXP`, `spendXP`, `refundXP`) live in `src/utils/zen.js`
+  - `spendXP()` returns `false` if insufficient balance
+- Storage keys are centralized in `KEYS` object from `src/utils/zen.js`
+- `safeLoad`/`safeSave` handle localStorage errors with memory fallback
 
 ### Audio
 - Audio files go in `public/audio/`
@@ -76,6 +94,6 @@ public/
 ## Workflow Preferences
 - Commit after each completed feature, not in bulk
 - Test changes visually in browser before committing
-- Keep components in single files (no splitting until truly necessary)
 - Prefer CSS animations over JS animations where possible
 - No unnecessary abstractions — direct, readable code
+- Run `npx vitest run` before committing to verify tests pass

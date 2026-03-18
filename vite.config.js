@@ -10,7 +10,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,m4a}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,m4a,mp3}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB for audio files
       },
       manifest: false,
     }),

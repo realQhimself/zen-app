@@ -2,15 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { ArrowLeft, Eraser, Check, RotateCcw, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// --- XP Helper ---
-const awardXP = (amount) => {
-  try {
-    const p = JSON.parse(localStorage.getItem('zen_profile') || '{"totalXP":0,"spentXP":0}');
-    p.totalXP += amount;
-    localStorage.setItem('zen_profile', JSON.stringify(p));
-  } catch { /* ignore */ }
-};
+import { addXP, safeLoad, safeSave, KEYS } from '../utils/zen';
 
 const HEART_SUTRA =`观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减`;
 
@@ -19,14 +11,14 @@ export default function Sutra() {
   const containerRef = useRef(null);
   const refCanvasRef = useRef(null);
   const advanceTimerRef = useRef(null);
-  const [currentIndex, setCurrentIndex] = useState(() => parseInt(localStorage.getItem('zen_sutra_index') || '0'));
+  const [currentIndex, setCurrentIndex] = useState(() => safeLoad(KEYS.SUTRA_INDEX, 0));
   const [isDrawing, setIsDrawing] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'success', 'retry'
 
   const currentChar = HEART_SUTRA[currentIndex];
 
   useEffect(() => {
-    localStorage.setItem('zen_sutra_index', currentIndex);
+    safeSave(KEYS.SUTRA_INDEX, currentIndex);
   }, [currentIndex]);
 
   // Initialize Canvas & Guide
@@ -157,7 +149,7 @@ export default function Sutra() {
 
   const triggerAdvance = () => {
     setFeedback('success');
-    awardXP(1);
+    addXP(1);
     advanceTimerRef.current = setTimeout(() => {
       if (currentIndex < HEART_SUTRA.length - 1) {
         setCurrentIndex(prev => prev + 1);

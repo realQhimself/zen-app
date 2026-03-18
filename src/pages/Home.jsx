@@ -2,23 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Wind, Music, PenTool, Leaf, Plus, Minus, Check, Trash2, X } from 'lucide-react';
-
-// --- 13 Buddhist Ranks (选佛图 Inspired) ---
-const RANKS = [
-  { level: 1, name: '凡夫', meaning: 'Ordinary Person', xp: 0 },
-  { level: 2, name: '信心', meaning: 'Heart of Faith', xp: 100 },
-  { level: 3, name: '发心住', meaning: 'Aspiration Awakened', xp: 400 },
-  { level: 4, name: '精进行', meaning: 'Diligent Practice', xp: 1000 },
-  { level: 5, name: '回向位', meaning: 'Dedication of Merit', xp: 2000 },
-  { level: 6, name: '欢喜地', meaning: 'Ground of Joy', xp: 3800 },
-  { level: 7, name: '离垢地', meaning: 'Stainless Ground', xp: 6600 },
-  { level: 8, name: '发光地', meaning: 'Luminous Ground', xp: 10600 },
-  { level: 9, name: '焰慧地', meaning: 'Blazing Wisdom', xp: 16100 },
-  { level: 10, name: '不动地', meaning: 'Immovable Ground', xp: 23600 },
-  { level: 11, name: '法云地', meaning: 'Dharma Cloud', xp: 33600 },
-  { level: 12, name: '等觉', meaning: 'Equal Enlightenment', xp: 47600 },
-  { level: 13, name: '妙觉', meaning: 'Buddhahood', xp: 67600 },
-];
+import { RANKS, getRank, getNextRank, safeLoad, safeSave, KEYS } from '../utils/zen';
 
 // --- Default Profile ---
 const DEFAULT_HABITS = [
@@ -51,44 +35,22 @@ const DEFAULT_PROFILE = {
 
 // --- XP Helpers ---
 const getProfile = () => {
-  try {
-    const saved = localStorage.getItem('zen_profile');
-    if (saved) return JSON.parse(saved);
-  } catch { /* ignore */ }
+  const saved = safeLoad(KEYS.PROFILE, null);
+  if (saved) return saved;
 
   // Migration: if zen_garden exists with points, carry them over
   let startXP = 0;
-  try {
-    const garden = JSON.parse(localStorage.getItem('zen_garden') || '{}');
-    if (garden.points != null) {
-      const itemCosts = { rock: 10, moss: 10, pine: 15, bamboo: 15, lantern: 20 };
-      const spent = (garden.items || []).reduce((sum, i) => sum + (itemCosts[i.type] || 0), 0);
-      startXP = (garden.points || 0) + spent;
-    }
-  } catch { /* ignore */ }
+  const garden = safeLoad(KEYS.GARDEN, {});
+  if (garden.points != null) {
+    const itemCosts = { rock: 10, moss: 10, pine: 15, bamboo: 15, lantern: 20 };
+    const spent = (garden.items || []).reduce((sum, i) => sum + (itemCosts[i.type] || 0), 0);
+    startXP = (garden.points || 0) + spent;
+  }
 
   return { ...DEFAULT_PROFILE, totalXP: startXP, spentXP: 0 };
 };
 
-const saveProfile = (profile) => {
-  localStorage.setItem('zen_profile', JSON.stringify(profile));
-};
-
-const getRank = (totalXP) => {
-  let rank = RANKS[0];
-  for (const r of RANKS) {
-    if (totalXP >= r.xp) rank = r;
-    else break;
-  }
-  return rank;
-};
-
-const getNextRank = (totalXP) => {
-  for (const r of RANKS) {
-    if (totalXP < r.xp) return r;
-  }
-  return null; // Already at max
-};
+const saveProfile = (profile) => safeSave(KEYS.PROFILE, profile);
 
 // --- Zen Quotes ---
 const QUOTES = [
@@ -285,10 +247,9 @@ export default function Home() {
   };
 
   // --- Read feature stats ---
-  const fishCount = parseInt(localStorage.getItem('zen_fish_count') || '0');
-  const sutraIndex = parseInt(localStorage.getItem('zen_sutra_index') || '0');
-  let meditation = { sessions: 0, totalSeconds: 0 };
-  try { meditation = JSON.parse(localStorage.getItem('zen_meditation') || '{"sessions":0,"totalSeconds":0}'); } catch {}
+  const fishCount = safeLoad(KEYS.FISH_COUNT, 0);
+  const sutraIndex = safeLoad(KEYS.SUTRA_INDEX, 0);
+  const meditation = safeLoad(KEYS.MEDITATION, { sessions: 0, totalSeconds: 0 });
 
   const tabs = [
     { key: 'daily', label: '日课' },
