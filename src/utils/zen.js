@@ -38,6 +38,7 @@ export const KEYS = {
   MEDITATION: 'zen_meditation',
   FISH_COUNT: 'zen_fish_count',
   SUTRA_INDEX: 'zen_sutra_index',
+  SUTRA_PROGRESS: 'zen_sutra_progress',
   MEDITATION_MODE: 'zen_meditation_mode',
   MEDITATION_TIMER: 'zen_meditation_timer',
   GARDEN_MUTED: 'zen_garden_muted',
