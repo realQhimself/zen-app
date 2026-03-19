@@ -27,7 +27,7 @@ export default function Garden() {
   // Monk movement
   const joystickRef = useRef({ dx: 0, dy: 0 });
   useKeyboardControls(joystickRef, true); // keyboard always enabled
-  const { monkPos, monkDirection, activeInteractions, npcProximity, setTarget, moveTarget } = useMonkMovement(joystickRef, garden.items);
+  const { monkPos, monkDirection, activeInteractions, npcProximity, setTarget, moveTarget, idleState } = useMonkMovement(joystickRef, garden.items);
 
   // Muyu sound
   const muyuPoolRef = useRef([]);
@@ -356,7 +356,7 @@ export default function Garden() {
 
         {/* Monk */}
         <div
-          className={`absolute ${monkDirection === 'idle' ? 'monk-idle' : ''}`}
+          className={`absolute ${monkDirection === 'idle' ? 'monk-idle' : ''} ${idleState === 'sitting' ? 'monk-sitting' : ''}`}
           style={{
             left: `${monkPos.x}%`,
             top: `${monkPos.y}%`,
@@ -376,6 +376,42 @@ export default function Garden() {
             style={{ imageRendering: 'pixelated' }}
             draggable={false}
           />
+
+          {/* Zzz bubble when sleeping */}
+          <AnimatePresence>
+            {idleState === 'sleeping' && (
+              <motion.div
+                key="zzz"
+                className="absolute -top-6 -right-2 pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                {['Z', 'z', 'z'].map((char, i) => (
+                  <motion.span
+                    key={i}
+                    className="absolute font-serif font-bold text-zen-stone/70"
+                    style={{ fontSize: `${14 - i * 3}px` }}
+                    initial={{ opacity: 0, y: 0, x: i * 6 }}
+                    animate={{
+                      opacity: [0, 0.8, 0],
+                      y: [0, -16 - i * 6],
+                      x: [i * 6, i * 6 + 4],
+                    }}
+                    transition={{
+                      duration: 2.5,
+                      delay: i * 0.6,
+                      repeat: Infinity,
+                      ease: 'easeOut',
+                    }}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

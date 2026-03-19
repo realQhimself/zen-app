@@ -76,6 +76,10 @@ export function useMonkMovement(joystickRef, gardenItems) {
   const monkPosRef = useRef(monkPos);
   const animFrameRef = useRef(null);
 
+  // Idle state tracking: standing → sitting (2s) → sleeping (7s)
+  const [idleState, setIdleState] = useState('standing');
+  const lastMoveTimeRef = useRef(Date.now());
+
   // Tap-to-move target
   const targetRef = useRef(null);
   const [moveTarget, setMoveTarget] = useState(null); // for visual indicator
@@ -144,8 +148,20 @@ export function useMonkMovement(joystickRef, gardenItems) {
       if (Math.abs(dx) > 0.15) {
         setMonkDirection(dx < 0 ? 'left' : 'right');
       }
+
+      // Reset idle timer on movement
+      lastMoveTimeRef.current = Date.now();
+      setIdleState(prev => prev !== 'standing' ? 'standing' : prev);
     } else {
       setMonkDirection(prev => prev !== 'idle' ? 'idle' : prev);
+
+      // Update idle state based on elapsed idle time
+      const idleDuration = (Date.now() - lastMoveTimeRef.current) / 1000;
+      if (idleDuration >= 7) {
+        setIdleState(prev => prev !== 'sleeping' ? 'sleeping' : prev);
+      } else if (idleDuration >= 2) {
+        setIdleState(prev => prev !== 'sitting' ? 'sitting' : prev);
+      }
     }
 
     // Item proximity
@@ -199,5 +215,5 @@ export function useMonkMovement(joystickRef, gardenItems) {
     return () => clearInterval(interval);
   }, []);
 
-  return { monkPos, monkDirection, activeInteractions, npcProximity, setTarget, clearTarget, moveTarget };
+  return { monkPos, monkDirection, activeInteractions, npcProximity, setTarget, clearTarget, moveTarget, idleState };
 }

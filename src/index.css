@@ -161,6 +161,15 @@ img {
   50% { transform: translateY(-3px); }
 }
 
+/* Sitting state — reduced bounce, slight downward shift */
+.monk-sitting.monk-idle {
+  animation: monkSitBounce 3s ease-in-out infinite;
+}
+@keyframes monkSitBounce {
+  0%, 100% { transform: translateY(1px); }
+  50% { transform: translateY(0px); }
+}
+
 /* Smoke particles near incense when monk is close — large visible plume */
 .garden-item-smoke::before,
 .garden-item-smoke::after {
