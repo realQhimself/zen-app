@@ -76,9 +76,62 @@ export function useMonkMovement(joystickRef, gardenItems) {
   const monkPosRef = useRef(monkPos);
   const animFrameRef = useRef(null);
 
+  // Tap-to-move target
+  const targetRef = useRef(null);
+  const [moveTarget, setMoveTarget] = useState(null); // for visual indicator
+
+  const setTarget = useCallback((x, y) => {
+    const clampedX = Math.max(BOUNDS.minX, Math.min(BOUNDS.maxX, x));
+    const clampedY = Math.max(BOUNDS.minY, Math.min(BOUNDS.maxY, y));
+    targetRef.current = { x: clampedX, y: clampedY };
+    setMoveTarget({ x: clampedX, y: clampedY });
+  }, []);
+
+  const clearTarget = useCallback(() => {
+    targetRef.current = null;
+    setMoveTarget(null);
+  }, []);
+
+  const ARRIVAL_THRESHOLD = 1.5; // close enough to stop
+
   const gameLoop = useCallback(() => {
-    const { dx, dy } = joystickRef.current;
-    const isMoving = Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1;
+    const { dx: keyDx, dy: keyDy } = joystickRef.current;
+    const hasKeyboardInput = Math.abs(keyDx) > 0.1 || Math.abs(keyDy) > 0.1;
+
+    // Keyboard input overrides tap target
+    if (hasKeyboardInput) {
+      targetRef.current = null;
+      setMoveTarget(null);
+    }
+
+    // Determine movement: keyboard or tap-to-move
+    let dx = 0, dy = 0, isMoving = false;
+
+    if (hasKeyboardInput) {
+      dx = keyDx;
+      dy = keyDy;
+      isMoving = true;
+    } else if (targetRef.current) {
+      const pos = monkPosRef.current;
+      const tdx = targetRef.current.x - pos.x;
+      const tdy = targetRef.current.y - pos.y;
+      const dist = Math.sqrt(tdx * tdx + tdy * tdy);
+
+      if (dist < ARRIVAL_THRESHOLD) {
+        // Arrived at target
+        targetRef.current = null;
+        setMoveTarget(null);
+      } else {
+        // Normalize direction, apply speed
+        dx = (tdx / dist);
+        dy = (tdy / dist);
+        // Slow down when close for smooth stop
+        const speedMult = Math.min(1, dist / 5);
+        dx *= speedMult;
+        dy *= speedMult;
+        isMoving = true;
+      }
+    }
 
     if (isMoving) {
       const pos = monkPosRef.current;
@@ -146,5 +199,5 @@ export function useMonkMovement(joystickRef, gardenItems) {
     return () => clearInterval(interval);
   }, []);
 
-  return { monkPos, monkDirection, activeInteractions, npcProximity };
+  return { monkPos, monkDirection, activeInteractions, npcProximity, setTarget, clearTarget, moveTarget };
 }

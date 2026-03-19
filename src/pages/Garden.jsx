@@ -7,7 +7,7 @@ import { SkyOverlay, Stars, CloudOverlay, RainEffect, SnowEffect, FogEffect, Sea
 import { safeLoad, safeSave, KEYS } from '../utils/zen';
 import { GARDEN_ITEMS } from '../components/garden/gardenData';
 import { BuddhaNPC, MuyuNPC } from '../components/garden/NPCs';
-import VirtualJoystick, { KeyboardHint } from '../components/garden/VirtualJoystick';
+import { KeyboardHint } from '../components/garden/VirtualJoystick';
 import ItemPicker from '../components/garden/ItemPicker';
 import ItemRenderer from '../components/garden/ItemRenderer';
 import useGardenState from '../hooks/useGardenState';
@@ -25,8 +25,8 @@ export default function Garden() {
 
   // Monk movement
   const joystickRef = useRef({ dx: 0, dy: 0 });
-  useKeyboardControls(joystickRef, !isMobile);
-  const { monkPos, monkDirection, activeInteractions, npcProximity } = useMonkMovement(joystickRef, garden.items);
+  useKeyboardControls(joystickRef, true); // keyboard always enabled
+  const { monkPos, monkDirection, activeInteractions, npcProximity, setTarget, moveTarget } = useMonkMovement(joystickRef, garden.items);
 
   // Muyu sound
   const muyuPoolRef = useRef([]);
@@ -74,7 +74,7 @@ export default function Garden() {
   // --- Handlers ---
   const handleGardenTap = (e) => {
     if (showPicker) return;
-    if (e.target.closest('[data-garden-item]') || e.target.closest('[data-joystick]')) return;
+    if (e.target.closest('[data-garden-item]')) return;
 
     const rect = gardenRef.current.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -87,6 +87,9 @@ export default function Garden() {
       if (success && navigator.vibrate) navigator.vibrate(30);
       setPlacingItem(null);
       setGhostPos(null);
+    } else {
+      // Tap-to-move: monk walks to tapped position
+      setTarget(x, y);
     }
   };
 
@@ -321,12 +324,28 @@ export default function Garden() {
         </div>
       </div>
 
-      {/* Controls */}
-      {isMobile ? (
-        <VirtualJoystick joystickRef={joystickRef} />
-      ) : (
-        <KeyboardHint />
-      )}
+      {/* Tap target indicator */}
+      <AnimatePresence>
+        {moveTarget && (
+          <motion.div
+            key={`${moveTarget.x}-${moveTarget.y}`}
+            initial={{ scale: 0.5, opacity: 0.6 }}
+            animate={{ scale: 1.2, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="absolute w-5 h-5 rounded-full border-2 border-zen-ink/30 pointer-events-none"
+            style={{
+              left: `${moveTarget.x}%`,
+              top: `${moveTarget.y}%`,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 5,
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Desktop keyboard hint */}
+      {!isMobile && <KeyboardHint />}
 
       {/* Bottom-right buttons */}
       <div
