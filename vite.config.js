@@ -12,6 +12,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,m4a,mp3}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB for audio files
+        skipWaiting: true,
+        clientsClaim: true,
       },
       manifest: false,
     }),

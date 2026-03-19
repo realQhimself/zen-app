@@ -87,7 +87,7 @@ const Navigation = () => {
   if (location.pathname === '/sutra') return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/60 backdrop-blur-xl border-t border-white/30 pb-safe pt-2 px-6 flex justify-around items-center h-16 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2 md:right-auto">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/60 backdrop-blur-xl border-t border-white/30 pb-safe pt-2 px-6 flex justify-around items-center h-16 z-50 max-w-md mx-auto">
       <NavItem to="/" icon={User} label="修行" />
       <NavItem to="/meditation" icon={Wind} label="禅修" />
       <NavItem to="/fish" icon={Music} label="木鱼" />
@@ -110,8 +110,8 @@ export default function App() {
       </AnimatePresence>
 
       <div className="h-[100dvh] flex flex-col">
-        <div className="flex-1 overflow-auto md:flex md:justify-center">
-          <div className="h-full w-full md:max-w-md">
+        <div className="flex-1 overflow-hidden flex justify-center">
+          <div className="h-full w-full max-w-md">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/meditation" element={<MeditationPage />} />
