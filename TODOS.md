@@ -73,23 +73,66 @@
 ### P1-D3: 禅修结束结算屏 ✅ (2026-03-19)
 - 停止后显示时长/呼吸次数/功德，Framer Motion 动画
 
-### P1-SUTRA-BUG: 抄经跳字 Bug [P1] [S]
-- 问题: 抄写过程中偶尔跳过一个字直接到下一个
-- 需要排查 Sutra.jsx 的字符推进逻辑
-- 来源: Q 反馈 (2026-03-19)
+### P1-SUTRA-BUG: 抄经跳字 Bug ✅ (2026-03-19)
+- triggerAdvance() 重复调用导致跳字，已修复
 
-### P1-MOVE: 点击移动替代摇杆 [P2] [M]
-- 问题: 现有摇杆移速不均匀，人物跳来跳去不 smooth
-- 方案: 移除 VirtualJoystick，改为点击/触摸目标点，人物自动平滑走过去
-- 桌面端鼠标点击同理，保留 WASD 键盘控制
-- 需改: useMonkMovement.js, VirtualJoystick.jsx, Garden.jsx
-- 来源: Q 反馈 (2026-03-19)
+### P1-MOVE: 点击移动替代摇杆 ✅ (2026-03-19)
+- 已替换为 tap-to-move，保留 WASD 键盘控制
 
 ### P1-GUIDED: 禅修引导词扩充 [P2] [M]
 - 当前只有 5 种心情各 1 套引导词
 - 目标: 扩充到 10-20 套，覆盖更多场景和情境
 - 纯内容添加，改 src/data/guidedScripts.js
 - 来源: Q 反馈 (2026-03-19)
+
+### --- 禅园改版 (CEO Review 2026-03-19, EXPANSION 模式) ---
+
+### P1-GARDEN-SPRITES: 物品/NPC sprite 升级 [P1] [L]
+- 当前: 16x16 像素物品太小，NPC 是 SVG 色块与像素风不搭
+- 目标: 32x32 或 48x48 精致像素 sprite，包括：
+  - 5 种物品各 3 个生长阶段 sprite (小/中/大)
+  - 佛像、木鱼 NPC 改为像素 sprite (替换 SVG)
+  - 和尚 8 帧行走动画 + 打坐 sprite
+- Sprite 来源: Google API + Nano Banana 2 Pro 生成
+- 来源: CEO Review 禅园改版
+
+### P1-GARDEN-PLACEMENT: 物品落地动效+音效 [P1] [S]
+- 当前: 放物品没有任何反馈
+- 目标: 物品从小变大弹出 (Framer Motion spring) + 清脆"叮"音效
+- 改 ItemRenderer.jsx + 新增 place.mp3 音效
+- 来源: CEO Review 惊喜点 1
+
+### P1-GARDEN-FOOTSTEP: 和尚脚步声 [P2] [S]
+- 当前: 走路无声无息
+- 目标: 踩碎石"沙沙"声，低音量 + 随机音调避免重复
+- 需要: 1 个短脚步音效文件，音频池 + 随机 pitch
+- 来源: CEO Review 惊喜点 2
+
+### P1-GARDEN-PROXIMITY: 物品近违反应增强 [P1] [S]
+- 当前: glow/sway/ripple 动画太微弱
+- 目标: 增强到 10 倍可见度 — 走近莲池泡泡、禅灯变亮、香炉烟变浓
+- 纯 CSS 改动 (index.css 动画参数)
+- 来源: CEO Review 惊喜点 3
+
+### P1-GARDEN-AMBIENCE: 环境音效随天气/时间 [P2] [M]
+- 当前: 只有一首 garden.mp3 循环
+- 目标: 白天鸟叫+风声、夜晚虫鸣+铃虎、雨天叠加雨声
+- 复用 useWeather 数据，加 2-3 个音效文件 (<200KB each)
+- 来源: CEO Review 惊喜点 4
+
+### P1-GARDEN-IDLE: 和尚待机动画 [P2] [S]
+- 当前: 站定只有微弱上下跳动
+- 目标: 站 2 秒→打坐 sprite，5 秒→头上 Zzz 气泡
+- 需要: 1 个打坐 sprite + CSS 气泡动画
+- 来源: CEO Review 惊喜点 5
+
+### P1-GARDEN-GROWTH: 物品生长系统 [P2] [M]
+- 当前: 物品放下后永远不变
+- 目标: 记录 placedAt 日期，根据天数显示不同生长阶段 sprite
+  - 第 1 天: 小苗/暗淡 → 第 3 天: 中等 → 第 7 天: 完全体
+- 需要: gardenState 加 placedAt 字段 (向后兼容旧数据)
+- 需要: 每个物品 2-3 个阶段 sprite (来自 P1-GARDEN-SPRITES)
+- 来源: CEO Review 惊喜点 6
 
 ### P1-SENTRY: 接入 Sentry [P2] [S]
 - 从 Phase 0 移入 (Eng Review 决定: 没部署没用户时接入无意义)
@@ -130,6 +173,12 @@
 - 目标: 加入 8-10 部经典 (如《金刚经》节选、《六祖坛经》名句、《法华经》观世音菩萨普门品等)
 - 需要: 经文数据 + 选经 UI + 进度分别保存
 - 来源: Q 反馈 (2026-03-19)
+
+### P2-SCREENSHOT: 禅园截图分享 [P2] [M]
+- 一键截图当前禅园 (含天气/季节/物品)
+- 生成像素风图片，可保存到相册或分享
+- Phase 3 社交功能的前置
+- 来源: CEO Review 惊喜点 7
 
 - AI 引导冥想 (Claude API) — 需要后端
 - 抄经笔画教学
