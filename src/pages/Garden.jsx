@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Volume2, VolumeX } from 'lucide-react';
@@ -203,6 +203,75 @@ export default function Garden() {
     }
     return () => { clearInterval(walkIntervalRef.current); };
   }, [isMoving]);
+
+  // --- Footstep sounds (procedural gravel crunch via Web Audio API) ---
+  const footstepCtxRef = useRef(null);
+  const lastStepTimeRef = useRef(0);
+  const STEP_INTERVAL = 350; // ms between steps
+
+  const playFootstep = useCallback(() => {
+    if (isMuted) return;
+    try {
+      if (!footstepCtxRef.current || footstepCtxRef.current.state === 'closed') {
+        footstepCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = footstepCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const now = ctx.currentTime;
+      const duration = 0.08;
+
+      // White noise buffer for gravel texture
+      const bufferSize = Math.ceil(ctx.sampleRate * duration);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1);
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+
+      // Bandpass filter for gravel character — randomize pitch ±20%
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 800 * (0.8 + Math.random() * 0.4);
+      filter.Q.value = 1;
+
+      // Gain envelope: quick attack, fast decay
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      source.start(now);
+      source.stop(now + duration);
+    } catch { /* AudioContext not available */ }
+  }, [isMuted]);
+
+  useEffect(() => {
+    if (!isMoving) return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      if (now - lastStepTimeRef.current >= STEP_INTERVAL) {
+        lastStepTimeRef.current = now;
+        playFootstep();
+      }
+    }, 50); // check frequently, but only play at STEP_INTERVAL cadence
+    return () => clearInterval(interval);
+  }, [isMoving, playFootstep]);
+
+  // Clean up footstep AudioContext on unmount
+  useEffect(() => {
+    return () => {
+      if (footstepCtxRef.current && footstepCtxRef.current.state !== 'closed') {
+        footstepCtxRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
 
   const SPRITE = `${BASE}images/garden/new-sprites/`;
   let monkSprite;
