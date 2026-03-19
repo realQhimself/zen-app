@@ -417,6 +417,15 @@ export default function Garden() {
           />
         ))}
 
+        {/* Night/Dusk overlay on garden surface */}
+        <div
+          className={`absolute inset-0 pointer-events-none garden-night-overlay ${
+            weather.timeOfDay === 'night' ? 'bg-blue-950/30' :
+            weather.timeOfDay === 'dusk' ? 'bg-indigo-950/15' : ''
+          }`}
+          style={{ zIndex: 1 }}
+        />
+
         {/* Placed Items */}
         <ItemRenderer
           items={garden.items}
@@ -425,6 +434,7 @@ export default function Garden() {
           onRemove={removeItem}
           onNavigate={handleItemNavigate}
           newlyPlacedId={newlyPlacedId}
+          timeOfDay={weather.timeOfDay}
         />
 
         {/* Fixed NPCs */}
@@ -453,7 +463,7 @@ export default function Garden() {
 
         {/* Monk */}
         <div
-          className={`absolute ${monkDirection === 'idle' ? 'monk-idle' : ''} ${idleState === 'sitting' ? 'monk-sitting' : ''}`}
+          className={`absolute ${monkDirection === 'idle' ? 'monk-idle' : ''} ${idleState === 'sitting' ? 'monk-sitting' : ''} ${weather.timeOfDay === 'night' || weather.timeOfDay === 'dusk' ? 'monk-moonlight-shadow' : ''}`}
           style={{
             left: `${monkPos.x}%`,
             top: `${monkPos.y}%`,
@@ -464,7 +474,13 @@ export default function Garden() {
         >
           <div
             className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-2.5 rounded-full"
-            style={{ background: 'radial-gradient(ellipse, rgba(0,0,0,0.18), transparent)', filter: 'blur(1px)' }}
+            style={{
+              background: weather.timeOfDay === 'night' || weather.timeOfDay === 'dusk'
+                ? 'radial-gradient(ellipse, rgba(100,120,180,0.15), transparent)'
+                : 'radial-gradient(ellipse, rgba(0,0,0,0.18), transparent)',
+              filter: 'blur(1px)',
+              transition: 'background 2s ease-in-out',
+            }}
           />
           <img
             src={monkSprite}

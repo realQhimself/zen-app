@@ -69,7 +69,7 @@ function getInteractionClass(item, activeInteractions) {
   }
 }
 
-export default function ItemRenderer({ items, activeInteractions, placingItem, onRemove, onNavigate, newlyPlacedId }) {
+export default function ItemRenderer({ items, activeInteractions, placingItem, onRemove, onNavigate, newlyPlacedId, timeOfDay }) {
   const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [longPressProgress, setLongPressProgress] = useState(null);
@@ -128,12 +128,15 @@ export default function ItemRenderer({ items, activeInteractions, placingItem, o
         const isBeingDeleted = longPressProgress?.itemId === item.id;
         const hasLink = def.link && isNearMonk;
         const isNewlyPlaced = item.id === newlyPlacedId;
+        const isNight = timeOfDay === 'night' || timeOfDay === 'dusk';
+        const emitsLight = item.type === 'lantern' || item.type === 'incense';
+        const nightGlowClass = isNight && emitsLight ? 'garden-night-glow' : '';
 
         return (
           <motion.div
             key={item.id}
             data-garden-item="true"
-            className={`absolute ${interactionClass}`}
+            className={`absolute ${interactionClass} ${nightGlowClass}`}
             initial={isNewlyPlaced ? { scale: 0, opacity: 0 } : false}
             animate={{ scale: 1, opacity: 1 }}
             transition={isNewlyPlaced ? { type: 'spring', stiffness: 400, damping: 15 } : undefined}

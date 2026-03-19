@@ -389,3 +389,32 @@ img {
   0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.5; }
   50% { transform: translateX(-50%) scale(1.15); opacity: 0.8; }
 }
+
+/* === Day/Night Ambient Lighting === */
+
+/* Warm radial glow for light-emitting items at night/dusk */
+.garden-night-glow {
+  filter: drop-shadow(0 0 10px rgba(255, 180, 50, 0.6))
+          drop-shadow(0 0 20px rgba(255, 180, 50, 0.3));
+  animation: nightGlowPulse 3s ease-in-out infinite;
+}
+@keyframes nightGlowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(255, 180, 50, 0.6))
+            drop-shadow(0 0 20px rgba(255, 180, 50, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(255, 180, 50, 0.8))
+            drop-shadow(0 0 28px rgba(255, 180, 50, 0.45));
+  }
+}
+
+/* Moonlight shadow on monk at night — lighter, blue-tinted */
+.monk-moonlight-shadow {
+  filter: drop-shadow(1px 2px 3px rgba(120, 140, 200, 0.35));
+}
+
+/* Night overlay transition on garden surface */
+.garden-night-overlay {
+  transition: background-color 2s ease-in-out, opacity 2s ease-in-out;
+}
