@@ -186,11 +186,35 @@ export default function Garden() {
     navigate('/meditation');
   };
 
-  const monkSprite = monkDirection === 'left'
-    ? `${BASE}images/garden/monk-left.png`
-    : monkDirection === 'right'
-      ? `${BASE}images/garden/monk-right.png`
-      : `${BASE}images/garden/monk-idle.png`;
+  // Walk animation frame cycling (1-4)
+  const [walkFrame, setWalkFrame] = useState(1);
+  const walkIntervalRef = useRef(null);
+  const isMoving = monkDirection === 'left' || monkDirection === 'right';
+
+  useEffect(() => {
+    if (isMoving) {
+      setWalkFrame(1);
+      walkIntervalRef.current = setInterval(() => {
+        setWalkFrame(prev => (prev % 4) + 1);
+      }, 150);
+    } else {
+      clearInterval(walkIntervalRef.current);
+      walkIntervalRef.current = null;
+    }
+    return () => { clearInterval(walkIntervalRef.current); };
+  }, [isMoving]);
+
+  const SPRITE = `${BASE}images/garden/new-sprites/`;
+  let monkSprite;
+  if (monkDirection === 'left') {
+    monkSprite = `${SPRITE}monk-walk-l${walkFrame}.png`;
+  } else if (monkDirection === 'right') {
+    monkSprite = `${SPRITE}monk-walk-r${walkFrame}.png`;
+  } else if (idleState === 'sitting' || idleState === 'sleeping') {
+    monkSprite = `${SPRITE}monk-sit.png`;
+  } else {
+    monkSprite = `${SPRITE}monk-idle.png`;
+  }
 
   return (
     <motion.div
@@ -348,7 +372,7 @@ export default function Garden() {
             <img
               src={GARDEN_ITEMS.find(i => i.id === placingItem)?.image}
               alt=""
-              className="w-16 h-16"
+              className="w-14 h-14"
               style={{ imageRendering: 'pixelated' }}
             />
           </div>
@@ -372,7 +396,7 @@ export default function Garden() {
           <img
             src={monkSprite}
             alt="monk"
-            className="w-12 h-12 select-none"
+            className="w-14 h-14 select-none"
             style={{ imageRendering: 'pixelated' }}
             draggable={false}
           />

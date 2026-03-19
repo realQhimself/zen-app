@@ -35,7 +35,7 @@ export default function useGardenState() {
     const newId = `item_${Date.now()}`;
     setGarden(prev => ({
       ...prev,
-      items: [...prev.items, { id: newId, type, x, y }],
+      items: [...prev.items, { id: newId, type, x, y, placedAt: new Date().toISOString().split('T')[0] }],
     }));
     return newId;
   };

@@ -2,6 +2,24 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GARDEN_ITEMS } from './gardenData';
 
+function getGrowthStage(placedAt) {
+  if (!placedAt) return 'l'; // old items without date → full size
+  const placed = new Date(placedAt);
+  const now = new Date();
+  const days = Math.floor((now - placed) / (1000 * 60 * 60 * 24));
+  if (days >= 7) return 'l';
+  if (days >= 3) return 'm';
+  return 's';
+}
+
+function getSpriteForItem(def, placedAt) {
+  if (def.images) {
+    const stage = getGrowthStage(placedAt);
+    return def.images[stage] || def.image;
+  }
+  return def.image;
+}
+
 function DeleteModal({ itemName, onConfirm, onCancel }) {
   return (
     <motion.div
@@ -139,9 +157,9 @@ export default function ItemRenderer({ items, activeInteractions, placingItem, o
               style={{ background: 'radial-gradient(ellipse, rgba(0,0,0,0.15), transparent)', filter: 'blur(1px)' }}
             />
             <img
-              src={def.image}
+              src={getSpriteForItem(def, item.placedAt)}
               alt={def.name}
-              className="w-16 h-16 select-none"
+              className="w-14 h-14 select-none"
               style={{ imageRendering: 'pixelated' }}
               draggable={false}
             />
