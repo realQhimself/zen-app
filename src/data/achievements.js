@@ -1,0 +1,51 @@
+export const ACHIEVEMENTS = [
+  {
+    id: 'hundred-chars',
+    name: '百字成文',
+    icon: '🏮',
+    description: '累计抄写 100 字',
+    condition: { type: 'total_chars', threshold: 100 },
+  },
+  {
+    id: 'seven-days',
+    name: '七日精进',
+    icon: '🔥',
+    description: '连续抄经 7 天',
+    condition: { type: 'streak_days', threshold: 7 },
+  },
+  {
+    id: 'bodhi-sprout',
+    name: '菩提发芽',
+    icon: '🌳',
+    description: '完成第一部经文',
+    condition: { type: 'completed_sutras', threshold: 1 },
+  },
+  {
+    id: 'thousand-chars',
+    name: '千字入心',
+    icon: '📿',
+    description: '累计抄写 1000 字',
+    condition: { type: 'total_chars', threshold: 1000 },
+  },
+  {
+    id: 'thirty-days',
+    name: '月轮圆满',
+    icon: '🌕',
+    description: '连续抄经 30 天',
+    condition: { type: 'streak_days', threshold: 30 },
+  },
+  {
+    id: 'hundred-days',
+    name: '百日筑基',
+    icon: '🏔️',
+    description: '连续抄经 100 天',
+    condition: { type: 'streak_days', threshold: 100 },
+  },
+  {
+    id: 'sutra-complete',
+    name: '经书圆满',
+    icon: '🪷',
+    description: '完成所有经文',
+    condition: { type: 'completed_all_sutras' },
+  },
+];

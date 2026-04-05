@@ -3,7 +3,7 @@ import { ArrowLeft, Check, RotateCcw, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addXP, safeLoad, safeSave, KEYS } from '../utils/zen';
-import { SUTRAS, getSutraById } from '../data/sutras';
+import { SUTRAS, getSutraById } from '../data/sutras/index';
 
 // --- Progress helpers ---
 
