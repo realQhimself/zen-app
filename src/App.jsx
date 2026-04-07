@@ -101,7 +101,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   return (
-    <Router basename="/zen-app">
+    <Router basename="/rq-zen-app">
       {/* Splash overlay — removed from DOM after fade-out */}
       <AnimatePresence>
         {showSplash && (

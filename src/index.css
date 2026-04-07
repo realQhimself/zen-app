@@ -1,6 +1,10 @@
 @import "tailwindcss";
-
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+
+/* Disable double-tap zoom globally — keeps buttons working */
+html {
+  touch-action: manipulation;
+}
 
 @theme {
   --color-zen-bg: #f5f5f0;

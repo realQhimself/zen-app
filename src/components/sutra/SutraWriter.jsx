@@ -16,6 +16,8 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
   const [currentIndex, setCurrentIndex] = useState(() => getSutraCharIndex(sutraId));
   const [isDrawing, setIsDrawing] = useState(false);
   const startTimeRef = useRef(Date.now());
+  const strokeCountRef = useRef(0);
+  const advanceTimerRef = useRef(null);
 
   const { startStroke, continueStroke, endStroke } = useBrushEngine();
   const { buildReference, shouldAdvance } = useCharRecognition();
@@ -54,10 +56,9 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
     const width = container.clientWidth;
     const height = container.clientHeight;
 
+    // Only set buffer resolution — CSS handles display size (prevents iOS zoom)
     canvas.width = width * dpr;
     canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
 
     ctx.scale(dpr, dpr);
     ctx.lineCap = 'round';
@@ -65,6 +66,11 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
 
     drawGuide(ctx, width, height);
     buildReference(currentChar, width, height);
+    strokeCountRef.current = 0;
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
   }, [currentIndex, currentChar, buildReference, sutraText.length]);
 
   const drawGuide = (ctx, width, height) => {
@@ -114,6 +120,11 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
   // --- Pointer handlers ---
   const handlePointerDown = (e) => {
     if (currentIndex >= sutraText.length) return;
+    // Cancel any pending advance — user is still writing
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
     setIsDrawing(true);
     startStroke(e, canvasRef.current);
   };
@@ -127,15 +138,45 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
     if (!isDrawing) return;
     setIsDrawing(false);
     endStroke();
+    strokeCountRef.current++;
 
-    // Check overlap — auto-advance if sufficient
-    if (shouldAdvance(canvasRef.current)) {
-      advanceToNext();
-    }
+    // Delay check — wait 0.5s after last stroke before deciding
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    advanceTimerRef.current = setTimeout(() => {
+      if (shouldAdvance(canvasRef.current, strokeCountRef.current)) {
+        advanceToNext();
+      }
+    }, 500);
   };
 
+  // Cleanup advance timer on unmount
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    };
+  }, []);
+
   const clearCanvas = () => {
-    initCanvas();
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
+    // Only redraw guide — don't resize canvas (avoids layout shift → Safari zoom)
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (canvas && container) {
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      drawGuide(ctx, width, height);
+      buildReference(currentChar, width, height);
+      strokeCountRef.current = 0;
+    }
   };
 
   const skipChar = () => {
@@ -147,8 +188,19 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
   // Upcoming characters preview
   const upcoming = sutraText.slice(currentIndex + 1, currentIndex + 6).split('');
 
+  // Prevent iOS pinch/gesture zoom while writing
+  useEffect(() => {
+    const prevent = (e) => e.preventDefault();
+    document.addEventListener('gesturestart', prevent, { passive: false });
+    document.addEventListener('gesturechange', prevent, { passive: false });
+    return () => {
+      document.removeEventListener('gesturestart', prevent);
+      document.removeEventListener('gesturechange', prevent);
+    };
+  }, []);
+
   return (
-    <div className="h-full flex" style={{ backgroundColor: '#f5f0e8' }}>
+    <div className="h-full flex" style={{ backgroundColor: '#f5f0e8', touchAction: 'manipulation' }}>
       {/* Desktop: left panel */}
       {isDesktop && (
         <div className="w-60 bg-white/50 border-r border-zen-sand/50 p-5 flex flex-col"
@@ -207,14 +259,14 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
           <span className="text-xs text-zen-stone">{currentIndex + 1}/{sutraText.length}</span>
         </div>
 
-        {/* Canvas */}
+        {/* Canvas — absolutely positioned to avoid layout shift */}
         <div
           ref={containerRef}
-          className="flex-1 relative flex items-center justify-center p-3"
+          className="flex-1 relative overflow-hidden"
         >
           <canvas
             ref={canvasRef}
-            className="touch-none"
+            className="absolute inset-0 w-full h-full touch-none"
             style={{ touchAction: 'none' }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -228,14 +280,16 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
         <div className="flex items-center justify-center gap-4 py-3 pb-safe">
           <button
             onClick={clearCanvas}
-            className="flex items-center gap-1.5 px-5 py-2 border border-zen-sand rounded-lg text-sm text-zen-stone active:bg-zen-sand/30 transition"
+            className="flex items-center gap-1.5 px-5 py-2.5 border border-zen-sand rounded-lg text-base text-zen-stone active:bg-zen-sand/30 transition"
+            style={{ touchAction: 'manipulation' }}
           >
             <RotateCcw size={14} />
             清除
           </button>
           <button
             onClick={skipChar}
-            className="flex items-center gap-1.5 px-5 py-2 border border-zen-sand rounded-lg text-sm text-zen-stone active:bg-zen-sand/30 transition"
+            className="flex items-center gap-1.5 px-5 py-2.5 border border-zen-sand rounded-lg text-base text-zen-stone active:bg-zen-sand/30 transition"
+            style={{ touchAction: 'manipulation' }}
           >
             <ChevronRight size={14} />
             跳过
