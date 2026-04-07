@@ -156,6 +156,17 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
     };
   }, []);
 
+  // Prevent iOS pinch/gesture zoom while writing
+  useEffect(() => {
+    const prevent = (e) => e.preventDefault();
+    document.addEventListener('gesturestart', prevent, { passive: false });
+    document.addEventListener('gesturechange', prevent, { passive: false });
+    return () => {
+      document.removeEventListener('gesturestart', prevent);
+      document.removeEventListener('gesturechange', prevent);
+    };
+  }, []);
+
   const clearCanvas = () => {
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current);
@@ -187,17 +198,6 @@ export default function SutraWriter({ sutraId, onComplete, onExit }) {
 
   // Upcoming characters preview
   const upcoming = sutraText.slice(currentIndex + 1, currentIndex + 6).split('');
-
-  // Prevent iOS pinch/gesture zoom while writing
-  useEffect(() => {
-    const prevent = (e) => e.preventDefault();
-    document.addEventListener('gesturestart', prevent, { passive: false });
-    document.addEventListener('gesturechange', prevent, { passive: false });
-    return () => {
-      document.removeEventListener('gesturestart', prevent);
-      document.removeEventListener('gesturechange', prevent);
-    };
-  }, []);
 
   return (
     <div className="h-full flex" style={{ backgroundColor: '#f5f0e8', touchAction: 'manipulation' }}>
