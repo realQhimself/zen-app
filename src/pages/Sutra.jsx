@@ -6,6 +6,7 @@ import SutraCompletion from '../components/sutra/SutraCompletion';
 import { saveSutraProgress, loadSutraProgress } from '../utils/sutraProgress';
 import { clearStrokes } from '../utils/sutraDb';
 import { getSutraById } from '../data/sutras/index';
+import { safeLoad, safeSave, KEYS } from '../utils/zen';
 
 // Stages: select → dedicate → write → complete
 export default function Sutra() {
@@ -17,7 +18,9 @@ export default function Sutra() {
   const handleSelect = useCallback((id, { completed, inProgress }) => {
     setSutraId(id);
     if (inProgress) {
-      // Resume writing — skip dedication
+      // Resume writing — restore saved dedication
+      const saved = safeLoad(KEYS.SUTRA_DEDICATION, {})[id] || '';
+      setDedication(saved);
       setStage('write');
     } else {
       setStage('dedicate');
@@ -33,6 +36,10 @@ export default function Sutra() {
       clearStrokes(sutraId).catch(() => {});
     }
     setDedication(dedicationText);
+    // Persist dedication so it survives pause/resume
+    const dedications = safeLoad(KEYS.SUTRA_DEDICATION, {});
+    dedications[sutraId] = dedicationText;
+    safeSave(KEYS.SUTRA_DEDICATION, dedications);
     setStage('write');
   }, [sutraId]);
 
@@ -48,11 +55,17 @@ export default function Sutra() {
   }, []);
 
   const handleDone = useCallback(() => {
+    // Clean up saved dedication
+    if (sutraId) {
+      const dedications = safeLoad(KEYS.SUTRA_DEDICATION, {});
+      delete dedications[sutraId];
+      safeSave(KEYS.SUTRA_DEDICATION, dedications);
+    }
     setSutraId(null);
     setDedication('');
     setCompletionStats(null);
     setStage('select');
-  }, []);
+  }, [sutraId]);
 
   switch (stage) {
     case 'select':
