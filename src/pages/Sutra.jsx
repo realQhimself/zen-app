@@ -43,8 +43,8 @@ export default function Sutra() {
     setStage('write');
   }, [sutraId]);
 
-  const handleWritingComplete = useCallback(({ duration, chars }) => {
-    setCompletionStats({ duration, chars });
+  const handleWritingComplete = useCallback((stats) => {
+    setCompletionStats(stats);
     setStage('complete');
   }, []);
 
